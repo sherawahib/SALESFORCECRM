@@ -1,3 +1,4 @@
+import type { HTTPMethods } from 'fastify';
 import { getApp } from '@ops/api/app';
 
 export async function proxyToFastify(request: Request): Promise<Response> {
@@ -16,7 +17,7 @@ export async function proxyToFastify(request: Request): Promise<Response> {
   }
 
   const res = await app.inject({
-    method: request.method,
+    method: request.method as HTTPMethods,
     url: url.pathname + url.search,
     headers,
     payload,
