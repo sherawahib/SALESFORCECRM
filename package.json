@@ -1,0 +1,11 @@
+{
+  "name": "salesforcecrm",
+  "private": true,
+  "scripts": {
+    "vercel-build": "cd v2 && npm run vercel-build",
+    "build": "cd v2 && npm run vercel-build"
+  },
+  "dependencies": {
+    "next": "^15.1.6"
+  }
+}
