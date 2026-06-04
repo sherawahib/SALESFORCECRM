@@ -18,7 +18,11 @@ Enable for **Production**, **Preview**, and **Development**.
 
 | Setting | Value |
 |---------|--------|
-| Root Directory | `v2/apps/web` |
+| Root Directory | **`v2`** (not `v2/apps/web` — monorepo needs full `v2` folder) |
+
+If the project was created with `v2/apps/web`, change it: **Settings → General → Root Directory** → `v2` → Save → Redeploy.
+
+Alternatively set Root Directory to **repo root** (empty) and use root `vercel.json` in the repository.
 | Framework | Next.js |
 | Build Command | (from `vercel.json`) `cd ../.. && npm run vercel-build` |
 | Install Command | `cd ../.. && npm install` |
