@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { login, saveSession } from '@/lib/api';
 import { PLATFORM_NAME } from '@ops/shared';
 
@@ -21,6 +21,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [apiOk, setApiOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then((r) => r.json())
+      .then((d) => setApiOk(!!d?.ok))
+      .catch(() => setApiOk(false));
+  }, []);
 
   async function doLogin(loginEmail: string, loginPassword: string) {
     setLoading(true);
@@ -62,6 +70,14 @@ export default function LoginPage() {
       <form onSubmit={onSubmit} className="w-full max-w-md bg-white rounded-xl shadow-xl p-8 space-y-4">
         <h1 className="text-2xl font-bold text-slate-800">{PLATFORM_NAME}</h1>
         <p className="text-sm text-slate-500">Sign in with your work email and password.</p>
+        {apiOk === true && (
+          <p className="text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded">Server connected (Neon database online)</p>
+        )}
+        {apiOk === false && (
+          <p className="text-xs text-red-700 bg-red-50 px-3 py-2 rounded">
+            Cannot reach API. In Vercel, set DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, then redeploy.
+          </p>
+        )}
         {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded">{error}</p>}
         <label className="block text-sm font-medium text-slate-700">
           Email
