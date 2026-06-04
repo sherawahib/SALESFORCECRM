@@ -185,7 +185,7 @@ async function main() {
 
   await prisma.systemSetting.upsert({
     where: { key: 'company_name' },
-    create: { key: 'company_name', value: 'Ops Platform Demo' },
+    create: { key: 'company_name', value: 'TECH BY VISION CRM' },
     update: {},
   });
 

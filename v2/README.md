@@ -1,4 +1,4 @@
-# Ops Platform v2
+# TECH BY VISION CRM (v2)
 
 Enterprise multi-department CRM (Node.js + Next.js + MySQL).
 

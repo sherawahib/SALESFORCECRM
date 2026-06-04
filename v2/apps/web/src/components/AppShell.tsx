@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { loadUser, logout, can, type AuthUser } from '@/lib/api';
-import { PERMISSIONS } from '@ops/shared';
+import { PERMISSIONS, PLATFORM_NAME } from '@ops/shared';
 import { useEffect, useState } from 'react';
 
 const NAV = [
@@ -49,7 +49,7 @@ export function AppShell({
     <div className="min-h-screen flex">
       <aside className="w-56 bg-slate-900 text-white flex flex-col">
         <div className="p-4 border-b border-slate-700">
-          <p className="font-semibold text-sm">Ops Platform</p>
+          <p className="font-semibold text-sm leading-tight">{PLATFORM_NAME}</p>
           <p className="text-xs text-slate-300 truncate">{user.name}</p>
           <p className="text-xs text-slate-500 truncate">{user.designation?.name || user.department?.name}</p>
         </div>

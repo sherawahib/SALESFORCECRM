@@ -5,6 +5,9 @@ export {
   demoEmail,
 } from './demo-accounts';
 
+export const PLATFORM_NAME = 'TECH BY VISION CRM';
+export const PLATFORM_TAGLINE = 'Enterprise sales & operations hub';
+
 export const DEPARTMENTS = ['sales', 'production', 'accounts', 'hr', 'it', 'devops'] as const;
 export type DepartmentSlug = (typeof DEPARTMENTS)[number];
 

@@ -8,6 +8,7 @@
     "start": "next start -p 7777"
   },
   "dependencies": {
+    "@ops/api": "*",
     "@ops/shared": "*",
     "next": "^15.1.6",
     "react": "^19.0.0",

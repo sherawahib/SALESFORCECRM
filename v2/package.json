@@ -10,6 +10,7 @@
     "dev:api": "npm run dev -w @ops/api",
     "dev:web": "npm run dev -w @ops/web",
     "build": "npm run build -w @ops/shared && npm run build -w @ops/rbac && npm run build -w @ops/api && npm run build -w @ops/web",
+    "vercel-build": "npm run build -w @ops/shared && npm run build -w @ops/rbac && npm run db:generate -w @ops/api && npm run build -w @ops/web",
     "db:generate": "npm run db:generate -w @ops/api",
     "db:push": "npm run db:push -w @ops/api",
     "db:seed": "npm run db:seed -w @ops/api",
