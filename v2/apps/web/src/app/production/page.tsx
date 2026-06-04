@@ -569,7 +569,7 @@ export default function ProductionPage() {
                   </div>
                 )}
 
-                {isDeptHeadOnly && selected.status === 'pending_assignment' && tab !== 'head-queue' && (
+                {isDeptHeadOnly && selected.status === 'pending_assignment' && (
                   <p className="text-sm text-brand-700 font-medium border-t pt-4">
                     → Revisions from PM appear under <button type="button" className="underline" onClick={() => setTab('head-queue')}>Head queue</button>
                   </p>
