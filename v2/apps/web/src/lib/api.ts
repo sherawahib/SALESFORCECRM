@@ -7,7 +7,6 @@ export type AuthUser = {
   email: string;
   department?: { slug: string; name: string };
   designation?: { slug: string; name: string };
-  permissions?: string[];
   permissions: string[];
 };
 
