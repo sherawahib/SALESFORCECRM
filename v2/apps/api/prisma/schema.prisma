@@ -1,0 +1,574 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id           Int           @id @default(autoincrement())
+  slug         String        @unique
+  name         String
+  designations Designation[]
+  users         User[]
+  userDepartments UserDepartment[]
+  teams        ProductionTeam[]
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("departments")
+}
+
+model ProductionTeam {
+  id           Int     @id @default(autoincrement())
+  departmentId Int     @map("department_id")
+  slug         String
+  name         String
+  department   Department @relation(fields: [departmentId], references: [id])
+  users        User[]
+  projects     Project[]
+
+  @@unique([departmentId, slug])
+  @@map("production_teams")
+}
+
+model Designation {
+  id           Int                    @id @default(autoincrement())
+  departmentId Int                    @map("department_id")
+  slug         String
+  name         String
+  level        Int                    @default(0)
+  department   Department             @relation(fields: [departmentId], references: [id])
+  permissions  DesignationPermission[]
+  users        User[]
+
+  @@unique([departmentId, slug])
+  @@map("designations")
+}
+
+model Permission {
+  id           Int                    @id @default(autoincrement())
+  slug         String                 @unique
+  description  String?
+  designations DesignationPermission[]
+
+  @@map("permissions")
+}
+
+model DesignationPermission {
+  designationId Int         @map("designation_id")
+  permissionId  Int         @map("permission_id")
+  designation   Designation @relation(fields: [designationId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([designationId, permissionId])
+  @@map("designation_permissions")
+}
+
+model User {
+  id             Int              @id @default(autoincrement())
+  departmentId   Int              @map("department_id")
+  designationId  Int              @map("designation_id")
+  teamId         Int?             @map("team_id")
+  managerId      Int?             @map("manager_id")
+  name           String
+  email          String           @unique
+  passwordHash   String           @map("password_hash")
+  isActive       Boolean          @default(true) @map("is_active")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime?        @updatedAt @map("updated_at")
+  department     Department       @relation(fields: [departmentId], references: [id])
+  designation    Designation      @relation(fields: [designationId], references: [id])
+  team           ProductionTeam?  @relation(fields: [teamId], references: [id])
+  manager        User?            @relation("UserManager", fields: [managerId], references: [id])
+  reports        User[]           @relation("UserManager")
+  extraDepts     UserDepartment[]
+  refreshTokens  RefreshToken[]
+  employeeProfile EmployeeProfile?
+  leaveBalance   LeaveBalance?
+  payroll        EmployeePayroll?
+  salarySlips    SalarySlip[]
+  leaveRequests  LeaveRequest[]   @relation("LeaveEmployee")
+  leaveApprovals LeaveRequest[]   @relation("LeaveApprover")
+  attendance     AttendanceRecord[]
+  leadsCreated   Lead[]           @relation("LeadCreator")
+  leadsAssigned  Lead[]           @relation("LeadSeller")
+  projectsOwned  Project[]        @relation("ProjectManager")
+  projectsAsDesigner Project[]    @relation("ProjectDesigner")
+  projectsAsDeveloper Project[]   @relation("ProjectDeveloper")
+  revisionsOpened ProjectRevision[] @relation("RevisionOpenedBy")
+  revisionsAssigned ProjectRevision[] @relation("RevisionAssignee")
+  notifications  Notification[]
+  scheduledCalls ScheduledCall[]
+
+  @@map("users")
+}
+
+model UserDepartment {
+  userId       Int        @map("user_id")
+  departmentId Int        @map("department_id")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, departmentId])
+  @@map("user_departments")
+}
+
+model EmployeeProfile {
+  id               Int       @id @default(autoincrement())
+  userId           Int       @unique @map("user_id")
+  employeeCode     String    @unique @map("employee_code")
+  phone            String?
+  personalEmail    String?   @map("personal_email")
+  dateOfJoining    DateTime? @map("date_of_joining")
+  employmentType   String    @default("full_time") @map("employment_type")
+  employmentStatus String    @default("active") @map("employment_status")
+  address          String?
+  emergencyContact String?   @map("emergency_contact")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @updatedAt @map("updated_at")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("employee_profiles")
+}
+
+model LeaveRequest {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  leaveType    String    @map("leave_type")
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime  @map("end_date")
+  days         Float
+  reason       String?
+  status       String    @default("pending")
+  approvedById Int?      @map("approved_by")
+  resolvedAt   DateTime? @map("resolved_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User      @relation("LeaveEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  approvedBy   User?     @relation("LeaveApprover", fields: [approvedById], references: [id])
+
+  @@map("leave_requests")
+}
+
+model AttendanceRecord {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  workDate  DateTime @map("work_date")
+  status    String   @default("present")
+  checkIn   String?  @map("check_in")
+  checkOut  String?  @map("check_out")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workDate])
+  @@map("attendance_records")
+}
+
+model LeaveBalance {
+  id              Int   @id @default(autoincrement())
+  userId          Int   @unique @map("user_id")
+  annualAllowance Float @default(20) @map("annual_allowance")
+  annualUsed      Float @default(0) @map("annual_used")
+  sickAllowance   Float @default(10) @map("sick_allowance")
+  sickUsed        Float @default(0) @map("sick_used")
+  user            User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("leave_balances")
+}
+
+model EmployeePayroll {
+  id           Int     @id @default(autoincrement())
+  userId       Int     @unique @map("user_id")
+  baseSalary   Decimal @map("base_salary")
+  currency     String  @default("USD")
+  payFrequency String  @default("monthly") @map("pay_frequency")
+  bankName     String? @map("bank_name")
+  bankLast4    String? @map("bank_last4")
+  taxId        String? @map("tax_id")
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("employee_payroll")
+}
+
+model SalarySlip {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  periodMonth Int      @map("period_month")
+  periodYear  Int      @map("period_year")
+  periodLabel String   @map("period_label")
+  grossPay    Decimal  @map("gross_pay")
+  deductions  Decimal  @default(0)
+  netPay      Decimal  @map("net_pay")
+  allowances  String?
+  notes       String?
+  issuedAt    DateTime @default(now()) @map("issued_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodYear, periodMonth])
+  @@map("salary_slips")
+}
+
+model CafeteriaMenu {
+  id        Int      @id @default(autoincrement())
+  menuDate  DateTime @unique @map("menu_date")
+  breakfast String?
+  lunch     String?
+  dinner    String?
+  snacks    String?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("cafeteria_menus")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model SystemSetting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique @map("setting_key")
+  value String? @map("setting_value")
+
+  @@map("system_settings")
+}
+
+model Lead {
+  id               Int       @id @default(autoincrement())
+  leadCode         String    @unique @map("lead_code")
+  createdById      Int       @map("created_by")
+  assignedSellerId Int?      @map("assigned_seller_id")
+  companyName      String?   @map("company_name")
+  contactName      String    @map("contact_name")
+  email            String?
+  phone            String?
+  source           String?
+  notes            String?
+  status           String    @default("new")
+  priority         String    @default("medium")
+  queueTier        String    @default("new") @map("queue_tier")
+  isArchived       Boolean   @default(false) @map("is_archived")
+  callbackAt       DateTime? @map("callback_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @updatedAt @map("updated_at")
+  projectId        Int?      @unique @map("project_id")
+  creator          User      @relation("LeadCreator", fields: [createdById], references: [id])
+  seller           User?     @relation("LeadSeller", fields: [assignedSellerId], references: [id])
+  project          Project?  @relation(fields: [projectId], references: [id])
+  conversations    Conversation[]
+  invoices         Invoice[]
+  scheduledCalls   ScheduledCall[]
+
+  @@map("leads")
+}
+
+model Conversation {
+  id        Int      @id @default(autoincrement())
+  leadId    Int      @map("lead_id")
+  sellerId  Int      @map("seller_id")
+  channel   String   @default("call")
+  outcome   String
+  summary   String
+  createdAt DateTime @default(now()) @map("created_at")
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("conversations")
+}
+
+model Client {
+  id          Int       @id @default(autoincrement())
+  sellerId    Int       @map("seller_id")
+  contactName String    @map("contact_name")
+  companyName String?   @map("company_name")
+  email       String?
+  phone       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  invoices    Invoice[]
+  projects    Project[]
+
+  @@map("clients")
+}
+
+model Invoice {
+  id              Int           @id @default(autoincrement())
+  invoiceNumber   String        @unique @map("invoice_number")
+  clientId        Int           @map("client_id")
+  leadId          Int?          @map("lead_id")
+  projectId       Int           @map("project_id")
+  sellerId        Int           @map("seller_id")
+  parentProjectId Int?          @map("parent_project_id")
+  projectCategory String        @default("development") @map("project_category")
+  isUpsell        Boolean       @default(false) @map("is_upsell")
+  subtotal        Decimal       @default(0)
+  taxAmount       Decimal       @default(0) @map("tax_amount")
+  discount        Decimal       @default(0)
+  total           Decimal       @default(0)
+  amountPaid      Decimal       @default(0) @map("amount_paid")
+  currency        String        @default("USD")
+  status          String        @default("unpaid")
+  dueDate         DateTime?     @map("due_date")
+  paidAt          DateTime?     @map("paid_at")
+  notes           String?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  client          Client        @relation(fields: [clientId], references: [id])
+  lead            Lead?         @relation(fields: [leadId], references: [id])
+  project         Project       @relation(fields: [projectId], references: [id])
+  items           InvoiceItem[]
+  payments        Payment[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          Int     @id @default(autoincrement())
+  invoiceId   Int     @map("invoice_id")
+  description String
+  quantity    Decimal @default(1)
+  unitPrice   Decimal @map("unit_price")
+  lineTotal   Decimal @map("line_total")
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  invoiceId     Int      @map("invoice_id")
+  recordedById  Int      @map("recorded_by")
+  amount        Decimal
+  method        String   @default("bank")
+  reference     String?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model ApprovalRequest {
+  id          Int      @id @default(autoincrement())
+  type        String
+  entityType  String   @map("entity_type")
+  entityId    Int      @map("entity_id")
+  requestedBy Int      @map("requested_by")
+  status      String   @default("pending")
+  reason      String?
+  resolvedBy  Int?     @map("resolved_by")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("approval_requests")
+}
+
+model Project {
+  id              Int       @id @default(autoincrement())
+  projectCode     String    @unique @map("project_code")
+  leadId          Int?      @unique @map("lead_id")
+  clientId        Int       @map("client_id")
+  projectManagerId Int?     @map("project_manager_id")
+  assignedDesignerId Int?   @map("assigned_designer_id")
+  assignedDeveloperId Int? @map("assigned_developer_id")
+  teamId          Int?      @map("team_id")
+  headUserId      Int?      @map("head_user_id")
+  title           String
+  sellerBrief     String?   @map("seller_brief")
+  projectCategory String    @default("development") @map("project_category")
+  lifecycle       String    @default("prospect") @map("lifecycle")
+  status          String    @default("prospect")
+  isFrozen        Boolean   @default(false) @map("is_frozen")
+  budgetTotal     Decimal   @default(0) @map("budget_total")
+  comboGroupId    String?   @map("combo_group_id")
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+  lead            Lead?
+  client          Client    @relation(fields: [clientId], references: [id])
+  projectManager  User?     @relation("ProjectManager", fields: [projectManagerId], references: [id])
+  assignedDesigner User?    @relation("ProjectDesigner", fields: [assignedDesignerId], references: [id])
+  assignedDeveloper User?   @relation("ProjectDeveloper", fields: [assignedDeveloperId], references: [id])
+  team            ProductionTeam? @relation(fields: [teamId], references: [id])
+  invoices        Invoice[]
+  assignments     ProjectAssignment[]
+  revisions       ProjectRevision[]
+  deployments     DeploymentRecord[]
+  budgetLines     ProjectBudgetLine[]
+  scheduledCalls  ScheduledCall[]
+
+  @@map("projects")
+}
+
+model ProjectBudgetLine {
+  id          Int      @id @default(autoincrement())
+  projectId   Int      @map("project_id")
+  lineType    String   @map("line_type")
+  description String
+  amount      Decimal
+  createdAt   DateTime @default(now()) @map("created_at")
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_budget_lines")
+}
+
+model ProjectAssignment {
+  id           Int       @id @default(autoincrement())
+  projectId    Int       @map("project_id")
+  assignedById Int       @map("assigned_by")
+  assigneeId   Int       @map("assignee_id")
+  instructions String
+  stagingUrl   String?   @map("staging_url")
+  status       String    @default("assigned")
+  dueDate      DateTime? @map("due_date")
+  submittedAt  DateTime? @map("submitted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_assignments")
+}
+
+model ProjectRevision {
+  id                   Int       @id @default(autoincrement())
+  projectId            Int       @map("project_id")
+  revisionNumber       Int       @map("revision_number")
+  openedById           Int       @map("opened_by")
+  assigneeId           Int?      @map("assignee_id")
+  productionDiscipline String?   @map("production_discipline")
+  openedReason         String?   @map("opened_reason")
+  developerNotes       String?   @map("developer_notes")
+  resolutionNote       String?   @map("resolution_note")
+  status               String    @default("open")
+  notifySeller         Boolean   @default(false) @map("notify_seller")
+  submittedAt          DateTime? @map("submitted_at")
+  headApprovedAt       DateTime? @map("head_approved_at")
+  sellerNotifiedAt     DateTime? @map("seller_notified_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  project              Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  openedBy             User      @relation("RevisionOpenedBy", fields: [openedById], references: [id])
+  assignee             User?     @relation("RevisionAssignee", fields: [assigneeId], references: [id])
+  files                RevisionFile[]
+
+  @@unique([projectId, revisionNumber])
+  @@map("project_revisions")
+}
+
+model RevisionFile {
+  id           Int      @id @default(autoincrement())
+  projectId    Int      @map("project_id")
+  revisionId   Int?     @map("revision_id")
+  uploadedById Int      @map("uploaded_by")
+  originalName String   @map("original_name")
+  filePath     String   @map("file_path")
+  mimeType     String?  @map("mime_type")
+  fileSize     Int      @default(0) @map("file_size")
+  createdAt    DateTime @default(now()) @map("created_at")
+  revision     ProjectRevision? @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@map("revision_files")
+}
+
+model DeploymentRecord {
+  id          Int      @id @default(autoincrement())
+  projectId   Int?     @map("project_id")
+  createdById Int      @map("created_by")
+  environment String
+  repoUrl     String?  @map("repo_url")
+  stagingUrl  String?  @map("staging_url")
+  version     String?
+  notes       String?
+  deployedAt  DateTime @default(now()) @map("deployed_at")
+  project     Project? @relation(fields: [projectId], references: [id])
+
+  @@map("deployment_records")
+}
+
+model ScheduledCall {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  projectId       Int?      @map("project_id")
+  leadId          Int?      @map("lead_id")
+  title           String
+  notes           String?
+  scheduledAt     DateTime  @map("scheduled_at")
+  status          String    @default("scheduled")
+  reminder15Sent  Boolean   @default(false) @map("reminder_15_sent")
+  reminder5Sent   Boolean   @default(false) @map("reminder_5_sent")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  lead            Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([userId, scheduledAt])
+  @@map("scheduled_calls")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  type      String
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  entityType String   @map("entity_type")
+  entityId   Int      @map("entity_id")
+  action     String
+  details    String?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_log")
+}
+
+model EmailLog {
+  id           Int      @id @default(autoincrement())
+  userId       Int?     @map("user_id")
+  toEmail      String   @map("to_email")
+  subject      String
+  status       String
+  errorMessage String?  @map("error_message")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("email_log")
+}
+
+model IntegrationCredential {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  label     String
+  valueEnc  String   @map("value_enc")
+  updatedBy Int      @map("updated_by")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@map("integration_credentials")
+}
+
+model SupportTicket {
+  id          Int      @id @default(autoincrement())
+  createdById Int      @map("created_by")
+  subject     String
+  body        String
+  priority    String   @default("medium")
+  status      String   @default("open")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("support_tickets")
+}

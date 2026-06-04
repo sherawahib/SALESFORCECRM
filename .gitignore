@@ -1,0 +1,39 @@
+# Secrets & local config
+config/config.php
+.env
+.env.local
+.env.*.local
+apps/api/.env
+apps/web/.env.local
+v2/apps/api/.env
+v2/apps/web/.env.local
+
+# Dependencies & build
+node_modules/
+v2/node_modules/
+.next/
+v2/apps/web/.next/
+dist/
+build/
+.turbo/
+
+# Database (local dev)
+*.db
+*.db-journal
+v2/apps/api/prisma/dev.db
+v2/apps/api/prisma/dev.db-journal
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Uploads (user content)
+uploads/revisions/*
+!uploads/revisions/.gitkeep
+uploads/branding/company_logo.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
