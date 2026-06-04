@@ -1,0 +1,20 @@
+# Paste these in Vercel → Project → Settings → Environment Variables
+# Apply to: Production, Preview, Development
+# Then Redeploy
+
+DATABASE_URL
+(copy from apps/api/.env — Neon pooled URL)
+
+JWT_SECRET
+(copy from apps/api/.env)
+
+JWT_REFRESH_SECRET
+(copy from apps/api/.env)
+
+CRON_SECRET
+(copy from apps/api/.env)
+
+UPLOAD_DIR
+/tmp/crm-uploads
+
+# Do NOT set API_INTERNAL_URL — API runs inside the same Vercel project.
